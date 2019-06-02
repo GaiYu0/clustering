@@ -15,4 +15,8 @@ def laplacian(A):
 
 def normalized_laplacian(A):
     D = degree(A)
-    L = sps.eye
+
+def bethe_hessian(A, r):
+    D = degree(A)
+    H = (r ** 2 - 1) * sps.eye(A.shape[0]) - r * A + D
+    return H

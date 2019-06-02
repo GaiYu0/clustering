@@ -1,6 +1,8 @@
 import argparse
+import itertools
+
 import numpy as np
-from sklearn.metrics import f1_score
+from sklearn.metrics import accuracy_score, f1_score
 
 import algorithms
 import sbm
@@ -14,6 +16,9 @@ parser.add_argument('-k', type=int, help='number of communities')
 parser.add_argument('-n', type=int, help='number of nodes')
 parser.add_argument('--graph', type=str)
 args = parser.parse_args()
+
+def overlap(s, t, k):
+    return (np.mean(s == t) - 1 / k) / (1 - 1 / k)
 
 if __name__ == "__main__":
     if args.graph == 'partitioning':
@@ -30,7 +35,17 @@ if __name__ == "__main__":
     else:
         pass
 
-    s = getattr(algorithms, args.algorithm)(A, args.binary)
-    print(s.shape, sigma.shape)
+    # s = getattr(algorithms, args.algorithm)(A, args.binary)
+    s = algorithms.bethe_hessian(A, (c_in + c_out) / 2, k)
+
+    for permutation in itertools.permutations(range(k)):
+        t = np.copy(s)
+        for i, j in enumerate(permutation):
+            t[s == i] = j
+        print(overlap(sigma, t, k))
+
+    '''
+    print(accuracy_score(sigma, s))
     print(f1_score(sigma, s, average='micro'))
     print(f1_score(sigma, s, average='macro'))
+    '''
