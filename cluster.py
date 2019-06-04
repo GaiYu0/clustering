@@ -8,7 +8,6 @@ import algorithms
 import sbm
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--algorithm', type=str)
 parser.add_argument('--binary', action='store_true')
 parser.add_argument('--c-in', type=float)
 parser.add_argument('--c-out', type=float)
@@ -16,6 +15,11 @@ parser.add_argument('-k', type=int, help='number of communities')
 parser.add_argument('-n', type=int, help='number of nodes')
 parser.add_argument('--graph', type=str)
 args = parser.parse_args()
+
+parser.add_argument('--algorithm', type=str)
+for x in ['bethe_hessian', 'non_backtracking', 'random', 'spectral']:
+    globals()[x] = __import__(x)
+    parser.add_argument('--%s-args' % x, action=globals()[x].Parse)
 
 def overlap(s, t, k):
     return (np.mean(s == t) - 1 / k) / (1 - 1 / k)

@@ -9,8 +9,6 @@ import torch.sparse as ths
 import torch.nn.functional as F
 
 import data
-import gcn
-import mlp
 import operators
 import sbm
 import utils
@@ -27,7 +25,8 @@ parser.add_argument('--n-val', type=int)
 parser.add_argument('--op', type=str)
 
 parser.add_argument('--network', type=str)
-for x in ['mlp', 'gcn']:
+for x in ['gcn', 'mlp', 'sgc']:
+    globals()[x] = __import__(x)
     parser.add_argument('--%s-args' % x, action=globals()[x].Parse)
 
 parser.add_argument('--optim', type=str)
@@ -67,7 +66,14 @@ dat = th.from_numpy(op.data).float()
 a = ths.FloatTensor(idx, dat, [n, n]).to(device)
 
 network_args = getattr(args, args.network.lower() + '_args')
-network_args.n_feats = [x.shape[1]] + network_args.n_feats + [k]
+if hasattr(network_args, 'n_feats'):
+    if network_args.n_feats is None:
+        network_args.n_feats = [x.shape[1], k]
+    else:
+        network_args.n_feats = [x.shape[1]] + network_args.n_feats + [k]
+else:
+    network_args.in_feats = x.shape[1]
+    network_args.out_feats = k
 network = globals()[args.network].Network(**vars(network_args)).to(device)
 optim_args = getattr(args, args.optim.lower() + '_args')
 optimizer = getattr(optim, args.optim)(network.parameters(), **vars(optim_args))
