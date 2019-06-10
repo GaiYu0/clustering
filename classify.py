@@ -15,6 +15,7 @@ import utils
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--bs', type=int)
+parser.add_argument('--ds', type=str)
 parser.add_argument('--c-in', type=float)
 parser.add_argument('--c-out', type=float)
 parser.add_argument('--gpu', type=int)
@@ -37,7 +38,8 @@ args = parser.parse_args()
 
 device = th.device('cpu') if args.gpu < 0 else th.device('cuda:%d' % args.gpu)
 
-x, y = data.load_binary_covtype()
+# x, y = data.load_binary_covtype()
+x, y = data.load_binary_mnist()
 x = x.to(device)
 y = y.to(device)
 perm = th.randperm(len(x), device=device)

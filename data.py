@@ -56,7 +56,7 @@ def load_mnist():
 
 def load_binary_mnist():
     x, y = load_mnist()
-    y[y != 1] = -1
+    y[y != 1] = 0
     return x, y
 
 
