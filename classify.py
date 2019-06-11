@@ -17,7 +17,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--bs', type=int)
 parser.add_argument('--c-in', type=float)
 parser.add_argument('--c-out', type=float)
-parser.add_argument('--ds', type=str)
 parser.add_argument('--eps', type=float, default=1e-5)
 parser.add_argument('--gpu', type=int)
 parser.add_argument('--log-every', type=int)
@@ -34,7 +33,7 @@ for x in ['gcn', 'mlp', 'sgc']:
 
 parser.add_argument('--optim', type=str)
 for x in ['SGD', 'Adam']:
-    parser.add_argument('--%s-args' % x, action=getattr(utils, 'Parse%sArgs' % x))
+    parser.add_argument('--%s-args' % x.lower(), action=getattr(utils, 'Parse%sArgs' % x))
 
 args = parser.parse_args()
 
@@ -50,15 +49,15 @@ x_train = x_train / std
 x_val = (x_val - mean) / std
 x_test = (x_test - mean) / std
 
-x = th.from_numpy(np.vstack([x_train, x_val, x_test])).to(device)
-y = th.from_numpy(np.vstack([y_train, y_val, y_test])).to(device)
+x = th.from_numpy(np.vstack([x_train, x_val, x_test])).float().to(device)
+y = th.from_numpy(np.hstack([y_train, y_val, y_test])).long().to(device)
 idx_train = th.arange(len(x_train)).to(device).to(device)
 idx_val = th.arange(len(x_train), len(x_train) + len(x_val)).to(device)
 idx_test = th.arange(len(x_train) + len(x_val), len(x)).to(device)
 
 k = 2
 n = len(x)
-p = [th.sum(y == 0), th.sum(y == 1)]
+p = [th.sum(y == 0), th.sum(y == 1)]  # TODO
 c_in = args.c_in
 c_out = args.c_out
 q = np.ones([k, k]) * c_out / n
@@ -80,12 +79,12 @@ else:
     network_args.in_feats = x.shape[1]
     network_args.out_feats = k
 network = __import__(args.network).Network(**vars(network_args)).to(device)
-optim_args = getattr(args, args.optim + '_args')
+optim_args = getattr(args, args.optim.lower() + '_args')
 optimizer = getattr(optim, args.optim)(network.parameters(), **vars(optim_args))
 
 for i in range(args.n_iterations):
     z = network(a, x)
-    idx_batch = th.randperm(args.n_train, device=device)[:args.bs]
+    idx_batch = th.randperm(len(x_train), device=device)[:args.bs]
     idx = idx_train[idx_batch]
     ce = F.cross_entropy(z[idx], y[idx])
 
